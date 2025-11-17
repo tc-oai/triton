@@ -211,6 +211,11 @@ def make_default_opt_flags_nvidia(
         else:
             block_m = max(16, min(triton.next_power_of_2(tokens_per_expt), 128))
     # block n
+    # _p_matmul_ogs_NNN_bf16xfp8e4nvxfp8e4nv_16x256x128x1 kernel is bugged? for some reason when
+    # m is small, it's also slower than block_m=64.
+    #if block_m <= 16 and out_dtype == torch.bfloat16 and lhs_dtype == torch.float8_e4m3fn and rhs_dtype == torch.float8_e4m3fn:
+    if batch_size == 1 and block_m <= 16:
+        block_m = 64
     arch = None
     block_n, block_n_tma = opt_flags_nvidia.compute_block_n(n, arch, precision_config)
     # is_persistent
